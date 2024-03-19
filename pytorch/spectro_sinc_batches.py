@@ -15,6 +15,8 @@ import sys
 sys.path.insert(1, os.path.join(sys.path[0], '../utils'))
 import time
 from utilities import pad_truncate_sequence
+from music21 import converter, instrument, stream
+
 
 def load_audio(path, sr=22050, mono=True, offset=0.0, duration=None,
     dtype=np.float32, res_type='kaiser_best', 
@@ -269,7 +271,8 @@ mel_bins = 229
 amin = 1e-10
 
 # Load 9 seconds of a file, starting 6 seconds in
-(audio, _) = load_audio("../resources/Cmajor-logic.mp3", sr=sample_rate, mono=True)
+(audio, _) = load_audio("../resources/cut_bach.mp3", sr=sample_rate, mono=True)
+        
 
 audio = audio[None, :]  # (1, audio_samples)
 
@@ -295,6 +298,7 @@ while True:                 #pytorch_utils.py
     batch_waveform = move_data_to_device(segments[pointer : pointer + batch_size], 'cpu')
     pointer += batch_size
 
+
     # Save each batch as a WAV file using soundfile
     for i, waveform in enumerate(batch_waveform):
         waveform_np = waveform.cpu().numpy()  # Convert to NumPy array
@@ -317,6 +321,7 @@ while True:                 #pytorch_utils.py
 
         sinc_extractor = SincConv_fast(out_channels=win_length//2 + 1, kernel_size=win_length, sample_rate=sample_rate, 
                                     min_low_hz=begin_note, min_band_hz=20, stride=hop_size, padding= win_length // 2 +1)
+
         sinc = sinc_extractor.forward(batch_waveform.unsqueeze(1))
         sinc = abs(sinc) ** 2                           #power
         sinc = sinc[:, None, :, :].transpose(2, 3)
@@ -340,17 +345,17 @@ while True:                 #pytorch_utils.py
         sinc_spectrogram = sinc[0,0].transpose(0,1).numpy()
 
 
-        # # Display the spectrogram of librosa
-        # # plt.figure(figsize=(10, 4))
+        # Display the spectrogram of librosa
+        # plt.figure(figsize=(10, 4))
         # plt.subplot(3, 1, 2)
         # librosa.display.specshow(librosa.power_to_db(spectrogram, ref=np.max),
         #                         y_axis='linear', x_axis='s', sr=sample_rate, hop_length=hop_size)
         # plt.title('Spectrogram')
         # plt.colorbar(format='%+2.0f dB')
-        # # plt.show()
+        # plt.show()
 
-        # # Display the spectrogram of sincConv
-        # # plt.figure(figsize=(10, 4))
+        # Display the spectrogram of sincConv
+        # plt.figure(figsize=(10, 4))
         # plt.subplot(3, 1, 3)
         # librosa.display.specshow(librosa.power_to_db(sinc_spectrogram, ref=np.max),
         #                         y_axis='linear', x_axis='s', sr=sample_rate, hop_length=hop_size)    
@@ -365,7 +370,7 @@ while True:                 #pytorch_utils.py
         plt.subplot(3, 1, 2)
         librosa.display.specshow(spectrogram,
                                 y_axis='linear', x_axis='s', sr=sample_rate, hop_length=hop_size, cmap='viridis')
-        plt.title('Spectrogram')
+        plt.title('Original method Log-mel Spectrogram')
         plt.colorbar(format='%+2.0f dB')
         # plt.show()
 
@@ -374,94 +379,8 @@ while True:                 #pytorch_utils.py
         plt.subplot(3, 1, 3)
         librosa.display.specshow(sinc_spectrogram,
                                 y_axis='linear', x_axis='s', sr=sample_rate, hop_length=hop_size, cmap='viridis')    
-        plt.title('Spectrogram')
+        plt.title('Proposed method Log-Mel Spectrogram')
         plt.colorbar(format='%+2.0f dB')
         plt.tight_layout()
         plt.show()
 
-
-
-
-
-
-
-
-
-
-
-# import torch
-# import torch.nn as nn
-# import torch.nn.functional as F
-# import matplotlib.pyplot as plt
-# import numpy as np
-
-# class SincConv(nn.Module):
-#     def __init__(self, out_channels, kernel_size, sample_rate=16000, min_low_hz=50, min_band_hz=50):
-#         super(SincConv, self).__init__()
-
-#         if kernel_size % 2 == 0:
-#             kernel_size += 1  # Ensure odd kernel size for symmetry
-
-#         self.out_channels = out_channels
-#         self.kernel_size = kernel_size
-#         self.sample_rate = sample_rate
-#         self.min_low_hz = min_low_hz
-#         self.min_band_hz = min_band_hz
-
-#         # Experiment with different low and high frequencies
-#         low_hz_values = [50, 100, 200]  # Example values, you can adjust
-#         high_hz_values = [500, 1000, 2000]  # Example values, you can adjust
-
-#         # Create a set of filters for each combination of low and high frequencies
-#         filters = []
-#         for low_hz in low_hz_values:
-#             for high_hz in high_hz_values:
-#                 filters.append(self.create_sinc_filter(low_hz, high_hz))
-
-#         self.filters = nn.ParameterList(filters)
-
-#     def create_sinc_filter(self, low_hz, high_hz):
-#         low = torch.abs(low_hz)
-#         high = torch.clamp(torch.abs(high_hz), self.min_low_hz, self.sample_rate / 2 - self.min_band_hz)
-#         band = high - low
-
-#         n = (torch.arange(0, self.kernel_size) - (self.kernel_size - 1) / 2).float()
-#         window = 0.54 - 0.46 * torch.cos(2 * np.pi * n / self.kernel_size)
-
-#         sinc_filter = band * torch.sinc(2 * np.pi * high / self.sample_rate * n)
-#         sinc_filter = sinc_filter * window
-
-#         return sinc_filter.view(1, 1, -1)
-
-#     def forward(self, waveforms):
-#         outputs = []
-#         for filter in self.filters:
-#             outputs.append(F.conv1d(waveforms, filter, stride=1, padding=self.kernel_size // 2))
-
-#         return torch.cat(outputs, dim=1)
-
-
-# # Example usage
-# waveform = torch.randn(1, 16000)
-# sinc_conv = SincConv(out_channels=9, kernel_size=251)
-# output = sinc_conv(waveform)
-
-# # Visualize the filters and their responses
-# plt.figure(figsize=(12, 6))
-# for i, filter in enumerate(sinc_conv.filters):
-#     plt.subplot(3, 3, i + 1)
-#     plt.plot(filter.view(-1).numpy())
-#     plt.title(f'Filter {i + 1}')
-
-# plt.tight_layout()
-# plt.show()
-
-# # Visualize the output
-# plt.figure(figsize=(12, 6))
-# for i in range(output.size(1)):
-#     plt.subplot(3, 3, i + 1)
-#     plt.plot(output[0, i].detach().numpy())
-#     plt.title(f'Filter Response {i + 1}')
-
-# plt.tight_layout()
-# plt.show()

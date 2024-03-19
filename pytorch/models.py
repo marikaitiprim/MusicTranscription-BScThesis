@@ -15,6 +15,7 @@ from pytorch_utils import move_data_to_device
 import librosa.display
 import librosa
 
+import soundfile
 
 def init_layer(layer):
     """Initialize a Linear or Convolutional layer. """
@@ -138,22 +139,41 @@ class AcousticModelCRnn8Dropout(nn.Module):
           output: (batch_size, time_steps, classes_num)
         """
 
+        # x = self.conv_block1(input, pool_size=(1, 2), pool_type='avg')            
+        # x = F.dropout(x, p=0.2, training=self.training)
+        # x = self.conv_block2(x, pool_size=(1, 2), pool_type='avg')
+        # x = F.dropout(x, p=0.2, training=self.training)
+        # x = self.conv_block3(x, pool_size=(1, 2), pool_type='avg')
+        # x = F.dropout(x, p=0.2, training=self.training)
+        # x = self.conv_block4(x, pool_size=(1, 2), pool_type='avg')
+        # x = F.dropout(x, p=0.2, training=self.training)
+
+        # x = x.transpose(1, 2).flatten(2)
+        # x = F.relu(self.bn5(self.fc5(x).transpose(1, 2)).transpose(1, 2))
+        # x = F.dropout(x, p=0.5, training=self.training, inplace=True)
+        
+        # (x, _) = self.gru(x)
+        # x = F.dropout(x, p=0.5, training=self.training, inplace=False)
+        # output = torch.sigmoid(self.fc(x))
+        # return output
+        
         x = self.conv_block1(input, pool_size=(1, 2), pool_type='avg')            
-        x = F.dropout(x, p=0.2, training=self.training)
-        x = self.conv_block2(x, pool_size=(1, 2), pool_type='avg')
-        x = F.dropout(x, p=0.2, training=self.training)
-        x = self.conv_block3(x, pool_size=(1, 2), pool_type='avg')
-        x = F.dropout(x, p=0.2, training=self.training)
-        x = self.conv_block4(x, pool_size=(1, 2), pool_type='avg')
-        x = F.dropout(x, p=0.2, training=self.training)
+        x = F.dropout(x.clone(), p=0.2, training=self.training)  # Use clone() to avoid inplace
+        x = self.conv_block2(x.clone(), pool_size=(1, 2), pool_type='avg')  # Use clone() to avoid inplace
+        x = F.dropout(x.clone(), p=0.2, training=self.training)  # Use clone() to avoid inplace
+        x = self.conv_block3(x.clone(), pool_size=(1, 2), pool_type='avg')  # Use clone() to avoid inplace
+        x = F.dropout(x.clone(), p=0.2, training=self.training)  # Use clone() to avoid inplace
+        x = self.conv_block4(x.clone(), pool_size=(1, 2), pool_type='avg')  # Use clone() to avoid inplace
+        x = F.dropout(x.clone(), p=0.2, training=self.training)  # Use clone() to avoid inplace
 
         x = x.transpose(1, 2).flatten(2)
-        x = F.relu(self.bn5(self.fc5(x).transpose(1, 2)).transpose(1, 2))
-        x = F.dropout(x, p=0.5, training=self.training, inplace=True)
+        x = F.relu(self.bn5(self.fc5(x).transpose(1, 2)).transpose(1, 2)).clone().detach()
+        x = F.dropout(x, p=0.5, training=self.training)
         
         (x, _) = self.gru(x)
-        x = F.dropout(x, p=0.5, training=self.training, inplace=False)
+        x = F.dropout(x.clone(), p=0.5, training=self.training)  # Use clone() to avoid inplace
         output = torch.sigmoid(self.fc(x))
+
         return output
 
 class SincConv_fast(nn.Module):
@@ -375,25 +395,45 @@ class Regress_onset_offset_frame_velocity_CRNN(nn.Module):
         frames_per_second = 100
         hop_size = sample_rate // frames_per_second
 
+        # for i, waveform in enumerate(input):
+        #     waveform_np = waveform.cpu().numpy()  # Convert to NumPy array
+        #     soundfile.write(f'test.wav', waveform_np, sample_rate)
+
+        #     plt.figure(figsize=(12, 8))
+        #     plt.subplot(3, 1, 1)
+        #     librosa.display.waveplot(waveform_np, sr=sample_rate)
+        #     plt.title('Original Audio')
+        #     break
+
         sinc = self.sincconv(input.unsqueeze(1))
         sinc = abs(sinc) ** 2
         x = sinc[:, None, :, :].transpose(2, 3)
 
-        # sp = self.spectrogram_extractor(input)   # (batch_size, 1, time_steps, freq_bins) 
+        sp = self.spectrogram_extractor(input)   # (batch_size, 1, time_steps, freq_bins) 
 
         x = self.logmel_extractor(x)    # (batch_size, 1, time_steps, mel_bins)
+        sp = self.logmel_extractor(sp)
 
         # Convert to numpy array
-        # spectrogram = sp[0,0].transpose(0,1).numpy()
-        # sinc_spectrogram = x[0,0].transpose(0,1).numpy()
+        # spectrogram = sp[0,0].transpose(0,1).cpu().detach().numpy()
+        # sinc_spectrogram = x[0,0].transpose(0,1).cpu().detach().numpy()
 
-        # Display the spectrogram of sincConv
-        # plt.figure(2, figsize=(10, 4))
-        # librosa.display.specshow(sinc_spectrogram,
-        #                         y_axis='linear', x_axis='time', sr=sample_rate, hop_length=hop_size, cmap='viridis')
-        # plt.title('Spectrogram sinc conv')
+        # # Display the logmelspectrogram of librosa
+        # plt.subplot(3, 1, 2)
+        # librosa.display.specshow(spectrogram,
+        #                         y_axis='linear', x_axis='s', sr=sample_rate, hop_length=hop_size, cmap='viridis')
+        # plt.title('Original method Log-mel Spectrogram')
         # plt.colorbar(format='%+2.0f dB')
-        # plt.show()
+
+        # # Display the spectrogram of sincConv
+        # plt.subplot(3, 1, 3)
+        # librosa.display.specshow(sinc_spectrogram,
+        #                         y_axis='linear', x_axis='s', sr=sample_rate, hop_length=hop_size, cmap='viridis')    
+        # plt.title('Proposed method Log-Mel Spectrogram')
+        # plt.colorbar(format='%+2.0f dB')
+        # plt.tight_layout()
+
+        # plt.savefig('proposed.png', format='png')
 
         x = x.transpose(1, 3)
         x = self.bn0(x)

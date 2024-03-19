@@ -71,7 +71,7 @@ def train(args):
     loss_func = get_loss_func(loss_type)
 
     # Paths
-    workspace = os.path.join('/media/tony/ASUS_PROG-FILES/testing-thesis',workspace)
+    workspace = os.path.join('.',workspace)
     hdf5s_dir = os.path.join(workspace, 'hdf5s', 'maestro')
 
     checkpoints_dir = os.path.join(workspace, 'checkpoints', filename, 
@@ -111,7 +111,7 @@ def train(args):
 
 
     # insert pre-trained model's weights
-    full_checkpoint = torch.load('/media/tony/ASUS_PROG-FILES/testing-thesis/piano_transcription_inference_data/note_F1=0.9677_pedal_F1=0.9186.pth')
+    full_checkpoint = torch.load('./piano_transcription_inference_data/note_F1=0.9677_pedal_F1=0.9186.pth')
     note_model_weights = full_checkpoint['model']['note_model']     #extract only the weights of the note transcription
     model.load_state_dict(note_model_weights, strict=False)
 
@@ -173,7 +173,7 @@ def train(args):
     statistics_container = StatisticsContainer(statistics_path)
     
     # Optimizer
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate, 
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate,     #filter(lambda p: p.requires_grad, model.parameters())
         betas=(0.9, 0.999), eps=1e-08, weight_decay=0., amsgrad=True)
 
     # Resume training
@@ -202,10 +202,16 @@ def train(args):
 
     train_bgn_time = time.time()
 
+    # list_f1 = []
+    # list_f1_val = []
+    # list_f1_test = []
+
+    # losses = []
+
     for batch_data_dict in train_loader:
         
         # Evaluation 
-        if iteration % 5 == 0:# and iteration > 0:   5000           2
+        if iteration % 5000 == 0 and iteration > 0:            
             logging.info('------------------------------------')
             logging.info('Iteration: {}'.format(iteration))
 
@@ -218,6 +224,10 @@ def train(args):
             logging.info('    Train statistics: {}'.format(evaluate_train_statistics))
             logging.info('    Validation statistics: {}'.format(validate_statistics))
             logging.info('    Test statistics: {}'.format(test_statistics))
+
+            # list_f1.append(evaluate_train_statistics['frame_ap'])
+            # list_f1_val.append(validate_statistics['frame_ap'])
+            # list_f1_test.append(test_statistics['frame_ap'])
 
             statistics_container.append(iteration, evaluate_train_statistics, data_type='train')
             statistics_container.append(iteration, validate_statistics, data_type='validation')
@@ -234,17 +244,17 @@ def train(args):
             train_bgn_time = time.time()
         
         # Save model
-        # if iteration % 4 == 0:      #20000
-        #     checkpoint = {
-        #         'iteration': iteration, 
-        #         'model': model.module.state_dict(), 
-        #         'sampler': train_sampler.state_dict()}
+        if iteration % 20000 == 0:      
+            checkpoint = {
+                'iteration': iteration, 
+                'model': model.module.state_dict(), 
+                'sampler': train_sampler.state_dict()}
 
-        #     checkpoint_path = os.path.join(
-        #         checkpoints_dir, '{}_iterations.pth'.format(iteration))
+            checkpoint_path = os.path.join(
+                checkpoints_dir, '{}_iterations.pth'.format(iteration))
                 
-        #     torch.save(checkpoint, checkpoint_path)
-        #     logging.info('Model saved to {}'.format(checkpoint_path))
+            torch.save(checkpoint, checkpoint_path)
+            logging.info('Model saved to {}'.format(checkpoint_path))
         
         # Reduce learning rate
         if iteration % reduce_iteration == 0 and iteration > 0:
@@ -260,6 +270,9 @@ def train(args):
 
         loss = loss_func(model, batch_output_dict, batch_data_dict)
 
+        # if iteration % 10 == 0 and iteration > 0:
+        #     losses.append(loss.item())
+
         print(iteration, loss)
 
         # Backward
@@ -273,6 +286,25 @@ def train(args):
             break
 
         iteration += 1
+
+    # Plot results
+    # fig = plt.figure(figsize=(12,5))
+    # plt.plot(list_f1_val)
+    # plt.plot(list_f1)
+    # plt.plot(list_f1_test)
+    # plt.ylim(bottom=0)
+    # plt.legend(["Validation", "Training", "Test"])
+    # plt.title('F1 score')
+
+    # plt.savefig('precision_score.png', format='png')
+
+    # fig = plt.figure(figsize=(12,5))
+    # plt.plot(losses)
+    # plt.title('Learning Curve')
+    # plt.xlabel('# of steps', fontsize=12)
+    # plt.ylabel('CE - Loss', fontsize=12)
+
+    # plt.savefig('loss.png', format='png')
 
 
 if __name__ == '__main__':
