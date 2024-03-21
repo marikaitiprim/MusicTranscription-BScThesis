@@ -176,6 +176,7 @@ class AcousticModelCRnn8Dropout(nn.Module):
 
         return output
 
+#importing SincConv class from SincNet
 class SincConv_fast(nn.Module):
     """Sinc-based convolution
     Parameters
@@ -312,7 +313,6 @@ class SincConv_fast(nn.Module):
                         padding=self.padding, dilation=self.dilation,
                          bias=None, groups=1)
 
-
 class Regress_onset_offset_frame_velocity_CRNN(nn.Module):
     def __init__(self, frames_per_second, classes_num):
         super(Regress_onset_offset_frame_velocity_CRNN, self).__init__()
@@ -326,7 +326,6 @@ class Regress_onset_offset_frame_velocity_CRNN(nn.Module):
         fmax = sample_rate // 2
         begin_note = 21
         classes_num = 88 
-
         window = 'hann'
         center = True
         pad_mode = 'reflect'
@@ -335,8 +334,6 @@ class Regress_onset_offset_frame_velocity_CRNN(nn.Module):
         top_db = None
         midfeat = 1792 
         momentum = 0.01
-
-#########################################################################################################
 
         # Spectrogram extractor
         self.spectrogram_extractor = Spectrogram(n_fft=window_size, 
@@ -348,10 +345,9 @@ class Regress_onset_offset_frame_velocity_CRNN(nn.Module):
             n_fft=window_size, n_mels=mel_bins, fmin=fmin, fmax=fmax, ref=ref, 
             amin=amin, top_db=top_db, freeze_parameters=True)
 
+        #Initialization of SincNet layer
         self.sincconv = SincConv_fast(out_channels=window_size//2 + 1, kernel_size=window_size, sample_rate=sample_rate, 
                                     min_low_hz=begin_note, min_band_hz=20, stride=hop_size, padding= window_size // 2 +1)
-
-#############################################################################################################
 
         self.bn0 = nn.BatchNorm2d(mel_bins, momentum)
 
@@ -390,10 +386,9 @@ class Regress_onset_offset_frame_velocity_CRNN(nn.Module):
             'velocity_output': (batch_size, time_steps, classes_num)
           }
         """
-#################################################################################################################
-        sample_rate = 16000
-        frames_per_second = 100
-        hop_size = sample_rate // frames_per_second
+        # sample_rate = 16000
+        # frames_per_second = 100
+        # hop_size = sample_rate // frames_per_second
 
         # for i, waveform in enumerate(input):
         #     waveform_np = waveform.cpu().numpy()  # Convert to NumPy array
@@ -405,12 +400,15 @@ class Regress_onset_offset_frame_velocity_CRNN(nn.Module):
         #     plt.title('Original Audio')
         #     break
 
+        #SincNet layer
         sinc = self.sincconv(input.unsqueeze(1))
         sinc = abs(sinc) ** 2
         x = sinc[:, None, :, :].transpose(2, 3)
 
+        #Original Layer
         sp = self.spectrogram_extractor(input)   # (batch_size, 1, time_steps, freq_bins) 
 
+        #log-mel spectrogram
         x = self.logmel_extractor(x)    # (batch_size, 1, time_steps, mel_bins)
         sp = self.logmel_extractor(sp)
 
@@ -438,8 +436,6 @@ class Regress_onset_offset_frame_velocity_CRNN(nn.Module):
         x = x.transpose(1, 3)
         x = self.bn0(x)
         x = x.transpose(1, 3)
-
-#################################################################################################################
 
         frame_output = self.frame_model(x)  # (batch_size, time_steps, classes_num)
         reg_onset_output = self.reg_onset_model(x)  # (batch_size, time_steps, classes_num)

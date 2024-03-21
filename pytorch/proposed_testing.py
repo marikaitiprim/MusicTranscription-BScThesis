@@ -124,8 +124,6 @@ window = 'hann'
 center = True
 pad_mode = 'reflect'
 segment_samples = 16000*3  #sample_rate*duration (of every batch)
-
-
 top_db = None
 ref = 1.0
 n_mels = 128
@@ -139,7 +137,7 @@ note_model_weights = full_checkpoint['model']
 model.load_state_dict(note_model_weights)
 
 # Load 9 seconds of a file, starting 6 seconds in
-(audio, _) = load_audio("../waltz.mp3", sr=sample_rate, mono=True)        
+(audio, _) = load_audio("../resources/waltz.mp3", sr=sample_rate, mono=True)        
 
 audio = audio[None, :]  # (1, audio_samples)
 

@@ -1,3 +1,5 @@
+#testing the parameters for SincConv
+
 from torchlibrosa.stft import Spectrogram, LogmelFilterBank, STFT
 import torchlibrosa as tl
 import torch 
@@ -114,6 +116,7 @@ def move_data_to_device(x, device):
 
     return x.to(device)
 
+#SincConv class imported from Mirco Ravanelli, Yoshua Bengio, "Speaker Recognition from raw waveform with SincNet". https://arxiv.org/abs/1808.00158
 class SincConv_fast(nn.Module):
     """Sinc-based convolution
     Parameters
@@ -262,8 +265,6 @@ window = 'hann'
 center = True
 pad_mode = 'reflect'
 segment_samples = 16000*9  #sample_rate*duration (of every batch)
-
-
 top_db = None
 ref = 1.0
 n_mels = 128
@@ -271,9 +272,8 @@ mel_bins = 229
 amin = 1e-10
 
 # Load 9 seconds of a file, starting 6 seconds in
-(audio, _) = load_audio("../resources/cut_bach.mp3", sr=sample_rate, mono=True)
+(audio, _) = load_audio("../resources/Cmajor-logic.mp3", sr=sample_rate, mono=True)
         
-
 audio = audio[None, :]  # (1, audio_samples)
 
 print(hop_size)
