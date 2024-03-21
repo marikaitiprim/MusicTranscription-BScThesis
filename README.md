@@ -39,7 +39,15 @@ The system is trained for 100k iterations in this repository. The training looks
 
 ## Visualization of Sinc-based piano transcription
 
-Run spectro_sinc_batches.py as ```python3 spectro_sinc_batches.py``` to visualize a 10-second recording. The resulting figure consists of a audio waveform, a log-mel spectrogram from the original method and a log-mel spectrogram from our proposed one, without being trained. For testing the trained proposed model, run proposed_testing.py file as ```python3 proposed_testing.py``` and uncomment lines 415-434 in the models.py file.
+Run spectro_sinc_batches.py as 
+``` 
+python3 spectro_sinc_batches.py
+```
+to visualize a 10-second recording. The resulting figure consists of a audio waveform, a log-mel spectrogram from the original method and a log-mel spectrogram from our proposed one, without being trained. For testing the trained proposed model, run proposed_testing.py file as 
+```
+python3 proposed_testing.py
+```
+and uncomment lines 415-434 in the models.py file.
 
 **Demo 1.**  Dmitri Shostakovich: Waltz No. 2 [[audio]](resources/waltz.mp3).
 
