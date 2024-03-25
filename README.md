@@ -28,14 +28,14 @@ pip install -r requirements.txt
 ```
 
 ## Train the Sinc-based Piano transcription using pretrained model
-Download the pretrained model of the original method https://zenodo.org/records/4034264, which is loaded in main.py file
+Download the pretrained model of the original method https://zenodo.org/records/4034264, which is loaded in main.py file.
 Follow the rules as provided in the baseline method to prepare the data of the MAESTRO dataset.
-Execute the train command in runme.sh. This file is a modification of the [original](https://github.com/bytedance/piano_transcription/blob/master/runme.sh) one
-According to the original repository, 29 GB GPU memoroy is required with a batch size of 12. All the training experiments in this repository were conducted with a batch size of either 10 or 11 using GPU NVIDIA GeForce RTX
+Execute the train command in runme.sh. This file is a modification of the [original](https://github.com/bytedance/piano_transcription/blob/master/runme.sh).
+According to the original repository, 29 GB GPU memory is required with a batch size of 12. All the training experiments in this repository were conducted with a batch size of either 10 or 11 using GPU NVIDIA GeForce RTX
 4090.
 
 ## Results
-The system is trained for 100k iterations in this repository. The training looks like the one of the original.
+The system is trained for 100k iterations in this repository. The training output is similar to the original's.
 
 ## Visualization of Sinc-based piano transcription
 
