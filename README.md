@@ -1,21 +1,22 @@
-# BSc Thesis: Enhancing Music Transcription with Deep Neural Networks through Trainable Filterbanks
+# BSc Thesis: Incorporating Trainable Filterbanks in Deep Neural Networks for Music Transcription
 
-The BSc dissertation can be found [here](pergamos url)
+
 
 ## Abstract: 
-In recent years, Automatic Music Transcription, the process of converting audio recordings
-into symbolic representations without the human intervention, has witnessed significant
-advancements and has been applied across various domains in the music field. Many
-existing approaches utilize Deep Neural Networks and rely on learning their input features
-directly from representations like log-mel spectrograms. This leads to challenges such as
-a high number of trainable parameters, limited adaptability, and slow convergence. In this
-thesis, we tackle these challenges by proposing a new method to enhance piano transcription
-systems through the incorporation of trainable filterbanks for feature extraction.
-Drawing inspiration from SincNet, a Convolutional Neural Network architecture that implements
-parameterized sinc-based filterbanks, we aim to improve the accuracy and efficiency
-of an existing high-resolution piano transcription system. Our proposed framework
-achieves an Average Precision Score of 89% and surpasses the accuracy of the onset
-and offset detections of the original method.
+In recent years, Automatic Music Transcription, the process of converting audio
+recordings into symbolic representations without the human intervention, has witnessed
+significant advancements and has been applied across various domains in the music
+field. Many existing approaches utilize Deep Neural Networks and rely on learning their
+input features directly from representations like log-mel spectrograms. This leads to
+challenges such as a high number of trainable parameters, limited adaptability and slow
+convergence. In this thesis, we tackle these challenges by proposing a new method to
+enhance piano transcription systems through the incorporation of trainable filterbanks for
+feature extraction. Drawing inspiration from SincNet, a Convolutional Neural Network
+architecture that implements parameterized sinc-based filterbanks, we aim to improve
+the accuracy and efficiency of an existing high-resolution piano transcription system. Our
+proposed framework achieves an Average Precision Score of 89%, which is comparable
+to but lower than that of the original method. However, it outperforms the original method
+in terms of the accuracy of onset and offset detections.
 
 This repository is based on the code implementation of [high-resolution piano transcription system](https://github.com/bytedance/piano_transcription).
 The [SincConv_fast](https://github.com/mravanelli/SincNet/blob/master/dnn_models.py) class from SincNet architecture is also used for the purpose of this work.
