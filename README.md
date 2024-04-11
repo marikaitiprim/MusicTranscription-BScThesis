@@ -1,6 +1,6 @@
 # BSc Thesis: Incorporating Trainable Filterbanks in Deep Neural Networks for Music Transcription
 
-
+The BSc thesis can be found [here](https://pergamos.lib.uoa.gr/uoa/dl/frontend/el/browse/3395209)
 
 ## Abstract: 
 In recent years, Automatic Music Transcription, the process of converting audio
